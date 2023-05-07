@@ -11,29 +11,38 @@ cv::Mat read_image(std::string filename) {
 
 Eigen::MatrixXd image_to_patches(cv::Mat image, int PATCH_SIZE) {
 
-    // 计算块的行数和列数
-    int rows = image.rows / PATCH_SIZE;
-    int cols = image.cols / PATCH_SIZE;
+    int rows = image.rows;
+    int cols = image.cols;
+    int n_channels = image.channels();
 
-    // 创建输出矩阵
-    Eigen::MatrixXd patches(PATCH_SIZE * PATCH_SIZE, rows * cols);
+    // 计算图像可以被分为多少个8*8的块
+    int n_rows = rows / PATCH_SIZE;
+    int n_cols = cols / PATCH_SIZE;
 
-    // 将图像分割为块
-    int patch_idx = 0;
-    for (int r = 0; r < rows; r++)
-    {
-        for (int c = 0; c < cols; c++)
-        {
-            // 获取当前块的 ROI
-            cv::Rect roi(c * PATCH_SIZE, r * PATCH_SIZE, PATCH_SIZE, PATCH_SIZE);
-            cv::Mat patch = image(roi);
+    // 将图像转换为double类型的矩阵
+    cv::Mat double_image;
+    // image.convertTo(double_image, CV_64F, 1.0 / 255);
+    image.convertTo(double_image, CV_64F);
 
-            // 将块展开为列向量，并存储到输出矩阵中
-            Eigen::Map<Eigen::RowVectorXd> patch_vec(patch.ptr<double>(), PATCH_SIZE * PATCH_SIZE);
-            patches.col(patch_idx) = patch_vec;
-            patch_idx++;
+    Eigen::MatrixXd patches(n_channels * PATCH_SIZE * PATCH_SIZE, n_rows * n_cols);
+    Eigen::VectorXd col(PATCH_SIZE * PATCH_SIZE);
+    
+    int index = 0;
+    for (int i = 0; i < rows; i += PATCH_SIZE ) {
+        for (int j = 0; j < cols; j += PATCH_SIZE) {
+
+            col.setZero();
+            int idx = 0;
+            for (int x = i; x < i + PATCH_SIZE; x++) {
+                for (int y = j; y < j + PATCH_SIZE; y++) {
+                    col(idx++) = double_image.at<double>(x, y);
+                }
+            }
+            patches.col(index++) = col;
         }
     }
+
+    
 
     return patches;
 }
@@ -43,27 +52,51 @@ Eigen::MatrixXd multipy(Eigen::MatrixXd D, Eigen::MatrixXd X) {
 }
 
 cv::Mat patches_to_image(Eigen::MatrixXd patches, int PATCH_SIZE) {
-    int n_patches = patches.cols();                     // 块数
-    int image_size = std::sqrt(n_patches) * PATCH_SIZE; // 图像大小
-    cv::Mat image(image_size, image_size, CV_64FC1);    // 创建一个双精度浮点型矩阵
+    // 计算图像块数量
+    int num_patches = patches.cols();
 
-    // 将每个块放入图像中
-    int index = 0;
-    for (int i = 0; i < image_size; i += PATCH_SIZE)
+    // 创建输出图像
+    cv::Mat image(PATCH_SIZE * sqrt(num_patches), PATCH_SIZE * sqrt(num_patches), CV_8UC1);
+
+    // 将所有图像块放置到输出图像中
+    for (int i = 0; i < num_patches; i++)
     {
-        for (int j = 0; j < image_size; j += PATCH_SIZE)
+        // 获取当前图像块
+        Eigen::MatrixXd patch_data = patches.col(i);
+
+        // 将图像块数据复制到cv::Mat对象中
+        cv::Mat patch(PATCH_SIZE, PATCH_SIZE, CV_8UC1);
+        for (int j = 0; j < PATCH_SIZE; j++)
         {
-            // 取出当前块并将其复制到图像中
-            cv::Mat patch(PATCH_SIZE, PATCH_SIZE, CV_64FC1, patches.row(index).data());
-            cv::Mat patch_transpose;
-            cv::transpose(patch, patch_transpose);
-            patch_transpose.copyTo(image(cv::Rect(j, i, PATCH_SIZE, PATCH_SIZE)));
-            index++;
+            for (int k = 0; k < PATCH_SIZE; k++)
+            {
+                patch.at<uint8_t>(j, k) = static_cast<uint8_t>(patch_data(j * PATCH_SIZE + k));
+            }
         }
+
+        // 将当前图像块放置到输出图像中
+        int row_pos = (i / sqrt(num_patches)) * PATCH_SIZE;
+        int col_pos = (i % (int)sqrt(num_patches)) * PATCH_SIZE;
+        cv::Rect roi(col_pos, row_pos, PATCH_SIZE, PATCH_SIZE);
+        patch.copyTo(image(roi));
     }
-    
-    cv::Mat image_uint;
-    image.convertTo(image_uint, CV_8U);
-    
-    return image_uint;
+
+    return image;
+}
+
+void mat_data(cv::Mat data, std::string name)
+{
+    name = "../data/" + name;
+    std::ofstream file(name);
+    file << format(data, cv::Formatter::FMT_NUMPY) << std::endl;
+    file.close();
+}
+
+void matrix_data(Eigen::MatrixXd data, std::string name)
+{
+    name = "../data/" + name;
+    std::ofstream file(name);
+    Eigen::IOFormat fmt(1024, 0, ", ", "\n", "[", "]");
+    file << data.format(fmt) << std::endl;
+    file.close();
 }

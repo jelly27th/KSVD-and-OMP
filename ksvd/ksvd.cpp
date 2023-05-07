@@ -14,14 +14,16 @@ Eigen::MatrixXd ksvd_iniitation(Eigen::MatrixXd Y, int ATOM_NUM) {
     return D;
 }
 
-void ksvd_update(Eigen::MatrixXd Y, Eigen::MatrixXd D, Eigen::MatrixXd X) {
+void ksvd_update(Eigen::MatrixXd Y, Eigen::MatrixXd &D, Eigen::MatrixXd &X) {
     int n_atoms = D.cols();   // 字典原子个数
     int n_samples = Y.cols(); // 样本个数
 
     // 对每个原子进行更新
     for (int j = 0; j < n_atoms; j++)
     {
-        Eigen::VectorXd error = Y - D * X;                              // 计算当前字典下的误差
+        std::cout << "ksvd atom number " << j << std::endl;
+        
+        Eigen::MatrixXd error = Y - D * X;                              // 计算当前字典下的误差
         Eigen::VectorXd atom_col = D.col(j);                            // 取出当前原子列向量
         // Eigen::VectorXi support = (X.row(j).array() != 0).select(1, 0); // 取出当前原子的支持集
         Eigen::VectorXi support(X.cols());

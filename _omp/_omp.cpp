@@ -1,6 +1,6 @@
 #include "_omp.h"
 
-void _omp(Eigen::MatrixXd Y, Eigen::MatrixXd D, Eigen::MatrixXd X) {
+void _omp(Eigen::MatrixXd Y, Eigen::MatrixXd &D, Eigen::MatrixXd &X) {
     double tolerance = 1e-6; // 稀疏编码的容差
     int max_iterations = 50; // 最大迭代次数
 
@@ -13,6 +13,8 @@ void _omp(Eigen::MatrixXd Y, Eigen::MatrixXd D, Eigen::MatrixXd X) {
     // 对每个信号进行稀疏编码
     for (int i = 0; i < n_samples; i++)
     {
+        std::cout << "omp atom number : " << i << std::endl;
+
         Eigen::VectorXd y = Y.col(i);          // 取出当前信号
         Eigen::VectorXd residual = y;          // 初始化残差
         Eigen::VectorXd atom_indices(n_atoms); // 初始化选中的原子下标
@@ -23,6 +25,8 @@ void _omp(Eigen::MatrixXd Y, Eigen::MatrixXd D, Eigen::MatrixXd X) {
         // 迭代直到残差足够小或已选中足够多的原子
         while (residual.norm() > tolerance && k < max_iterations)
         {
+            // std::cout << "omp iter time: " << k << std::endl;
+
             double max_correlation = 0;
             int max_index = -1;
 
