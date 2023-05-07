@@ -2,7 +2,7 @@
 
 void _omp(Eigen::MatrixXd Y, Eigen::MatrixXd &D, Eigen::MatrixXd &X) {
     double tolerance = 1e-6; // 稀疏编码的容差
-    int max_iterations = 50; // 最大迭代次数
+    int max_iterations = 256; // 最大迭代次数
 
     int n_atoms = D.cols();   // 字典原子个数
     int n_samples = Y.cols(); // 信号个数

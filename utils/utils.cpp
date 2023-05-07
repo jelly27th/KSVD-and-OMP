@@ -42,8 +42,6 @@ Eigen::MatrixXd image_to_patches(cv::Mat image, int PATCH_SIZE) {
         }
     }
 
-    
-
     return patches;
 }
 
@@ -52,36 +50,31 @@ Eigen::MatrixXd multipy(Eigen::MatrixXd D, Eigen::MatrixXd X) {
 }
 
 cv::Mat patches_to_image(Eigen::MatrixXd patches, int PATCH_SIZE) {
-    // 计算图像块数量
     int num_patches = patches.cols();
+    int image_size = sqrt(num_patches) * PATCH_SIZE;
 
-    // 创建输出图像
-    cv::Mat image(PATCH_SIZE * sqrt(num_patches), PATCH_SIZE * sqrt(num_patches), CV_8UC1);
+    // Create output image
+    cv::Mat image(image_size, image_size, CV_64F);
 
-    // 将所有图像块放置到输出图像中
+    // Loop over patches and copy to output image
     for (int i = 0; i < num_patches; i++)
-    {
-        // 获取当前图像块
-        Eigen::MatrixXd patch_data = patches.col(i);
+    { 
+        Eigen::VectorXd col = patches.col(i); 
+        int cols = i % int(sqrt(num_patches));
+        int rows = i / int(sqrt(num_patches));
 
-        // 将图像块数据复制到cv::Mat对象中
-        cv::Mat patch(PATCH_SIZE, PATCH_SIZE, CV_8UC1);
-        for (int j = 0; j < PATCH_SIZE; j++)
-        {
-            for (int k = 0; k < PATCH_SIZE; k++)
-            {
-                patch.at<uint8_t>(j, k) = static_cast<uint8_t>(patch_data(j * PATCH_SIZE + k));
+        int idx = 0;
+        for (int x = (rows*PATCH_SIZE); x < PATCH_SIZE + (rows*PATCH_SIZE); ++x) {
+            for (int y = (cols * PATCH_SIZE); y < PATCH_SIZE + (cols * PATCH_SIZE); ++y) {
+                image.at<double>(x, y) = col(idx++);
             }
         }
-
-        // 将当前图像块放置到输出图像中
-        int row_pos = (i / sqrt(num_patches)) * PATCH_SIZE;
-        int col_pos = (i % (int)sqrt(num_patches)) * PATCH_SIZE;
-        cv::Rect roi(col_pos, row_pos, PATCH_SIZE, PATCH_SIZE);
-        patch.copyTo(image(roi));
     }
+    
+    cv::Mat image_uint8;
+    image.convertTo(image_uint8, CV_8U);
 
-    return image;
+    return image_uint8;
 }
 
 void mat_data(cv::Mat data, std::string name)
@@ -92,11 +85,11 @@ void mat_data(cv::Mat data, std::string name)
     file.close();
 }
 
-void matrix_data(Eigen::MatrixXd data, std::string name)
+void matrix_data(Eigen::MatrixXd data, std::string name, int size)
 {
     name = "../data/" + name;
     std::ofstream file(name);
-    Eigen::IOFormat fmt(1024, 0, ", ", "\n", "[", "]");
+    Eigen::IOFormat fmt(size, 0, ", ", "\n", "[", "]");
     file << data.format(fmt) << std::endl;
     file.close();
 }
