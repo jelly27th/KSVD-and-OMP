@@ -93,3 +93,12 @@ void matrix_data(Eigen::MatrixXd data, std::string name, int size)
     file << data.format(fmt) << std::endl;
     file.close();
 }
+
+Eigen::MatrixXd matrix_norm(const Eigen::MatrixXd &D) {
+    Eigen::MatrixXd D_norm = D;
+    for (int i = 0; i < D.cols(); i++) {
+        double norm = D_norm.col(i).norm();
+        D_norm.col(i) /= norm;
+    }
+    return D_norm;
+}

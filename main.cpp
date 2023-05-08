@@ -32,8 +32,9 @@ int main(int argc, char **argv) {
         std::cout << "train iter time: " << i << std::endl;
         
         std::cout << "omp start..." << std::endl;
-        _omp(Y, D, X);
-        
+        // _omp(Y, D, X);
+        _omp1(Y, D, X);
+
         std::cout << "kvd update..." << std::endl;
         ksvd_update(Y, D, X);
     }

@@ -15,5 +15,6 @@ Eigen::MatrixXd multipy(Eigen::MatrixXd D, Eigen::MatrixXd X);
 cv::Mat patches_to_image(Eigen::MatrixXd patches, int PATCH_SIZE);
 void matrix_data(Eigen::MatrixXd data, std::string name, int size);
 void mat_data(cv::Mat data, std::string name);
+Eigen::MatrixXd matrix_norm(const Eigen::MatrixXd &D);
 
 #endif
