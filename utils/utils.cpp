@@ -79,7 +79,7 @@ cv::Mat patches_to_image(Eigen::MatrixXd patches, int PATCH_SIZE) {
 
 void mat_data(cv::Mat data, std::string name)
 {
-    name = "../data/" + name;
+    name = "../result/" + name;
     std::ofstream file(name);
     file << format(data, cv::Formatter::FMT_NUMPY) << std::endl;
     file.close();
@@ -87,7 +87,7 @@ void mat_data(cv::Mat data, std::string name)
 
 void matrix_data(Eigen::MatrixXd data, std::string name, int size)
 {
-    name = "../data/" + name;
+    name = "../result/" + name;
     std::ofstream file(name);
     Eigen::IOFormat fmt(size, 0, ", ", "\n", "[", "]");
     file << data.format(fmt) << std::endl;

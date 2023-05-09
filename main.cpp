@@ -8,7 +8,7 @@
 
 #define PATCH_SIZE (8)
 #define ATOM_NUM (256)
-#define ITER_NUM (10)
+#define ITER_NUM (1)
 
 int main(int argc, char **argv) {
 
@@ -22,7 +22,7 @@ int main(int argc, char **argv) {
 
     std::cout << "ksvd init..." << std::endl;
     Eigen::MatrixXd D = ksvd_iniitation(Y, ATOM_NUM);
-    matrix_data(D, "dictionary", 256);
+    matrix_data(D, "dictionary_original", 256);
 
     Eigen::MatrixXd X(D.cols(), Y.cols());
 
@@ -36,11 +36,12 @@ int main(int argc, char **argv) {
         _omp1(Y, D, X);
 
         std::cout << "kvd update..." << std::endl;
-        ksvd_update(Y, D, X);
+        // ksvd_update(Y, D, X);
+        ksvd_update1(Y, D, X);
     }
 
     std::cout << "recover image..." << std::endl;
-    matrix_data(D, "dictionary", 256);
+    matrix_data(D, "dictionary_update", 256);
     matrix_data(X, "sparse", 1024);
     Eigen::MatrixXd patches = multipy(D, X);
 
