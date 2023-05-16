@@ -8,7 +8,7 @@
 
 #define PATCH_SIZE (8)
 #define ATOM_NUM (256)
-#define ITER_NUM (80)
+#define ITER_NUM (30)
 
 int main(int argc, char **argv) {
 
@@ -31,7 +31,7 @@ int main(int argc, char **argv) {
     matrix_data(D, "dictionary_original", 256);
 
     Eigen::MatrixXd X(D.cols(), Y.cols());
-    X.setZero();
+    // X.setZero();
 
     std::cout << "ksvd train..." << std::endl;
     for (int i = 0; i < ITER_NUM; ++i) {

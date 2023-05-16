@@ -8,6 +8,7 @@ cmake_minimum_required(VERSION 3.8)
 # SET(CMAKE_BUILD_TYPE "Debug")
 # SET(CMAKE_CXX_FLAGS_DEBUG "$ENV{CXXFLAGS} -O0 -Wall -g2 -ggdb")
 # SET(CMAKE_CXX_FLAGS_RELEASE "$ENV{CXXFLAGS} -O3 -Wall")
+# set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fopenmp")
 
 project(KSVD)
 
@@ -18,7 +19,7 @@ find_package(Eigen3 REQUIRED)
 include_directories(${EIGEN3_INCLUDE_DIR})
 
 # add_compile_options(-fopenmp)
-# find_package(OpenMP REQUIRED)
+find_package(OpenMP REQUIRED)
 
 include_directories(_omp)
 file(GLOB _OMP CONFIGURE_DEPENDS _omp/*.cpp)
@@ -29,4 +30,4 @@ file(GLOB UTILS CONFIGURE_DEPENDS utils/*.cpp)
 
 add_executable(KSVD main.cpp ${_OMP} ${KSVD} ${UTILS})
 
-target_link_libraries(KSVD ${OpenCV_LIBS})
+target_link_libraries(KSVD PUBLIC ${OpenCV_LIBS} OpenMP::OpenMP_CXX)

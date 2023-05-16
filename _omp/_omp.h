@@ -1,5 +1,5 @@
-#ifndef _OMP_H
-#define _OMP_H
+#ifndef __OMP_H
+#define __OMP_H
 
 #include "utils.h"
 

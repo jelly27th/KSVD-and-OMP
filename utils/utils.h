@@ -9,7 +9,8 @@
 #include <Eigen/Core>
 #include <fstream>
 
-// #include <omp.h>
+#include <omp.h>
+#include <stdio.h>
 
 cv::Mat read_image(std::string filename);
 Eigen::MatrixXd image_to_patches(cv::Mat image, int PATCH_SIZE);

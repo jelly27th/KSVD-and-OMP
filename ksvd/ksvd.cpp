@@ -23,20 +23,18 @@ void ksvd_update(Eigen::MatrixXd Y, Eigen::MatrixXd &D, Eigen::MatrixXd &X) {
 
     // 对每个原子进行更新
     for (int j = 0; j < n_atoms; j++) {
-        std::cout << "ksvd atom number " << j << std::endl;
+        printf("ksvd atom number : %d\n", j);
         
         Eigen::MatrixXd error = Y - D * X;                              // 计算当前字典下的误差
         Eigen::VectorXd atom_col = D.col(j);                            // 取出当前原子列向量
         // Eigen::VectorXi support = (X.row(j).array() != 0).select(1, 0); // 取出当前原子的支持集
         Eigen::VectorXi support(X.cols());
-        for (int i = 0; i < X.cols(); i++)
-        {
+        for (int i = 0; i < X.cols(); i++) {
             support(i) = (X(j, i) != 0) ? 1 : 0;
         }
 
         // 如果当前原子不在任何样本的支持集中，则跳过
-        if (support.sum() == 0)
-        {
+        if (support.sum() == 0) {
             continue;
         }
 
@@ -56,9 +54,9 @@ void ksvd_update1(Eigen::MatrixXd Y, Eigen::MatrixXd &D, Eigen::MatrixXd &X) {
     int n_samples = Y.cols(); // 样本个数
 
     // 对每个原子进行更新
-// #pragma omp parallel ford
+#pragma omp parallel for
     for (int j = 0; j < n_atoms; j++) {
-        std::cout << "ksvd atom number " << j << std::endl;
+        printf("ksvd atom number : %d\n", j);
 
         Eigen::MatrixXd error = Y - D * X;   // 计算当前字典下的误差
         Eigen::VectorXd atom_col = D.col(j); // 取出当前原子列向量

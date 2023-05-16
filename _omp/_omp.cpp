@@ -12,8 +12,7 @@ void _omp(Eigen::MatrixXd Y, Eigen::MatrixXd &D, Eigen::MatrixXd &X) {
     X.setZero();
 
     // 对每个信号进行稀疏编码
-    for (int i = 0; i < n_samples; i++)
-    {
+    for (int i = 0; i < n_samples; i++) {
         std::cout << "omp atom number : " << i << std::endl;
 
         Eigen::VectorXd y = Y.col(i);          // 取出当前信号
@@ -24,16 +23,14 @@ void _omp(Eigen::MatrixXd Y, Eigen::MatrixXd &D, Eigen::MatrixXd &X) {
         int k = 0; // 已选中的原子个数
 
         // 迭代直到残差足够小或已选中足够多的原子
-        while (residual.norm() > tolerance && k < max_iterations)
-        {
+        while (residual.norm() > tolerance && k < max_iterations) {
             // std::cout << "omp iter time: " << k << std::endl;
 
             double max_correlation = 0;
             int max_index = -1;
 
             // 在字典中寻找与残差具有最大相关性的原子
-            for (int j = 0; j < n_atoms; j++)
-            {
+            for (int j = 0; j < n_atoms; j++) {
                 if (atom_indices(j) != -1)
                 { // 如果该原子已被选中，则跳过
                     continue;
@@ -73,13 +70,14 @@ void _omp1(Eigen::MatrixXd Y, Eigen::MatrixXd &D, Eigen::MatrixXd &X) {
 
     // Eigen::MatrixXd D_norm = matrix_norm(D);
     // 初始化稀疏编码结果
-    // X.setZero();
+    X.setZero();
 
     // 对每个信号进行稀疏编码
-    // #pragma omp parallel ford
+#pragma omp parallel for
     for (int i = 0; i < n_samples; i++) {
-        std::cout << "omp atom number : " << i << std::endl;
 
+        printf("omp atom number : %d\n", i);
+        
         Eigen::VectorXd y = Y.col(i);          // 取出当前信号
         Eigen::VectorXd residual = y;          // 初始化残差
         Eigen::VectorXd atom_indices(n_atoms); // 初始化选中的原子下标
