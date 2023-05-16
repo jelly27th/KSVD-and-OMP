@@ -64,19 +64,19 @@ void _omp(Eigen::MatrixXd Y, Eigen::MatrixXd &D, Eigen::MatrixXd &X) {
     }
 }
 
-void _omp1(Eigen::MatrixXd Y, Eigen::MatrixXd &D, Eigen::MatrixXd &X)
-{
+void _omp1(Eigen::MatrixXd Y, Eigen::MatrixXd &D, Eigen::MatrixXd &X) {
     double tolerance = 1e-6; // 稀疏编码的容差
-    int max_iterations = 50; // 最大迭代次数
+    int max_iterations = 50; 
 
     int n_atoms = D.cols();   // 字典原子个数
     int n_samples = Y.cols(); // 信号个数
 
-    Eigen::MatrixXd D_norm = matrix_norm(D);
+    // Eigen::MatrixXd D_norm = matrix_norm(D);
     // 初始化稀疏编码结果
-    X.setZero();
+    // X.setZero();
 
     // 对每个信号进行稀疏编码
+    // #pragma omp parallel ford
     for (int i = 0; i < n_samples; i++) {
         std::cout << "omp atom number : " << i << std::endl;
 
@@ -99,7 +99,8 @@ void _omp1(Eigen::MatrixXd Y, Eigen::MatrixXd &D, Eigen::MatrixXd &X)
                     continue;
                 }
 
-                double correlation = std::abs(residual.transpose().dot(D_norm.col(j)));
+                // double correlation = std::abs(residual.transpose().dot(D_norm.col(j)));
+                double correlation = std::abs(residual.transpose().dot(D.col(j)));
                 if (correlation > max_correlation) {
                     max_correlation = correlation;
                     max_index = j;
@@ -111,7 +112,6 @@ void _omp1(Eigen::MatrixXd Y, Eigen::MatrixXd &D, Eigen::MatrixXd &X)
 
             // 更新稀疏编码结果
             // A_new
-            // Eigen::MatrixXd sub_D = D.leftCols(k);
             Eigen::MatrixXd sub_D(D.rows(), k + 1);
             int sub_D_idx = 0;
             for (int idx = 0; idx < n_atoms; idx++) {
@@ -121,12 +121,10 @@ void _omp1(Eigen::MatrixXd Y, Eigen::MatrixXd &D, Eigen::MatrixXd &X)
             }
 
             // L_p = (A_new)^+ * y
-            // Eigen::MatrixXd sub_X = sub_D.colPivHouseholderQr().solve(y);
             Eigen::MatrixXd tmp = sub_D.transpose() * sub_D;
             Eigen::VectorXd sub_X = (tmp.inverse() * sub_D.transpose()) * y;
 
             // X_rec
-            // X.block(0, i, k, 1) = sub_X;
             int sub_X_idx = 0;
             for (int idx = 0; idx < n_atoms; idx++) {
                 if (atom_indices[idx] != -1) {

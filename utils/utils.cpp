@@ -5,6 +5,7 @@ cv::Mat read_image(std::string filename) {
 
     cv::Mat image_double;
     image.convertTo(image_double, CV_64F);
+    cv::imshow("ori", image);
 
     return image_double;
 }
@@ -94,6 +95,9 @@ void matrix_data(Eigen::MatrixXd data, std::string name, int size)
     file.close();
 }
 
+/**
+ * return l2 matrix
+*/
 Eigen::MatrixXd matrix_norm(const Eigen::MatrixXd &D) {
     Eigen::MatrixXd D_norm = D;
     for (int i = 0; i < D.cols(); i++) {
@@ -101,4 +105,16 @@ Eigen::MatrixXd matrix_norm(const Eigen::MatrixXd &D) {
         D_norm.col(i) /= norm;
     }
     return D_norm;
+}
+
+Eigen::MatrixXd anti_matrix_norm(const Eigen::MatrixXd &D, const Eigen::MatrixXd &origin) {
+    // Eigen::MatrixXd D_anti = D;
+    // for (int i = 0; i < D.cols(); i++)
+    // {
+    //     double norm = origin.col(i).norm();
+    //     D_anti.col(i) = D.col(i) * norm;
+    // }
+    // return D_anti;
+
+    return D * 10;
 }
