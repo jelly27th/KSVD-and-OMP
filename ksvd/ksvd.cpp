@@ -1,78 +1,35 @@
 #include "ksvd.h"
+#include "_omp.h"
 #include "utils.h"
 
-Eigen::MatrixXd ksvd_iniitation(Eigen::MatrixXd Y, int ATOM_NUM) {
-    // 取样本前 ATOM_NUM 列作为字典
-    Eigen::MatrixXd D = Y.leftCols(ATOM_NUM);
-
-    // L2 范数归一化字典
-    // for (int i = 0; i < ATOM_NUM; i++)
-    // {
-    //     double norm = D.col(i).norm();
-    //     D.col(i) /= norm;
-    // }
-    return D;
-
-    // Eigen::MatrixXd D_norm = matrix_norm(D);
-    // return D_norm;
-}
-
-void ksvd_update(Eigen::MatrixXd Y, Eigen::MatrixXd &D, Eigen::MatrixXd &X) {
-    int n_atoms = D.cols();   // 字典原子个数
-    int n_samples = Y.cols(); // 样本个数
-
-    // 对每个原子进行更新
-    for (int j = 0; j < n_atoms; j++) {
-        printf("ksvd atom number : %d\n", j);
-        
-        Eigen::MatrixXd error = Y - D * X;                              // 计算当前字典下的误差
-        Eigen::VectorXd atom_col = D.col(j);                            // 取出当前原子列向量
-        // Eigen::VectorXi support = (X.row(j).array() != 0).select(1, 0); // 取出当前原子的支持集
-        Eigen::VectorXi support(X.cols());
-        for (int i = 0; i < X.cols(); i++) {
-            support(i) = (X(j, i) != 0) ? 1 : 0;
-        }
-
-        // 如果当前原子不在任何样本的支持集中，则跳过
-        if (support.sum() == 0) {
-            continue;
-        }
-
-        // 取出当前原子的支持样本集合
-        Eigen::MatrixXd sub_Y = Y.leftCols(support.sum());
-        Eigen::MatrixXd sub_X = X.topRows(n_atoms).leftCols(support.sum());
-
-        // 更新当前原子列向量
-        Eigen::VectorXd new_atom_col = sub_Y * sub_X.row(j).transpose();
-        new_atom_col /= new_atom_col.norm();
-        D.col(j) = new_atom_col;
-    }
+Eigen::MatrixXd ksvd_initation(int rows, int cols) {
+   Eigen::MatrixXd D = Eigen::MatrixXd::Random(rows, cols);
+   for (int i = 0; i < cols; ++i) {
+        D.col(i).normalize();
+   }
+   return D;
 }
 
 void ksvd_update1(Eigen::MatrixXd Y, Eigen::MatrixXd &D, Eigen::MatrixXd &X) {
-    int n_atoms = D.cols();   // 字典原子个数
-    int n_samples = Y.cols(); // 样本个数
+    int n_atoms = D.cols();   
 
-    // 对每个原子进行更新
-#pragma omp parallel for
+    // update dictionary for each atom
+// #pragma omp parallel for
     for (int j = 0; j < n_atoms; j++) {
         printf("ksvd atom number : %d\n", j);
-
-        Eigen::MatrixXd error = Y - D * X;   // 计算当前字典下的误差
-        Eigen::VectorXd atom_col = D.col(j); // 取出当前原子列向量
-        // 取出当前原子的支持集
+        
+        // find sparse nonzero entire
         Eigen::VectorXi support(X.cols());
-    // #pragma omp parallel for
         for (int i = 0; i < X.cols(); i++) {
             support(i) = (X(j, i) != 0) ? 1 : 0;
         }
 
-        // 如果当前原子不在任何样本的支持集中，则跳过
+        // if all zero, continue next atom
         if (support.sum() == 0) {
             continue;
         }
 
-        // 取出当前原子的支持样本集合
+        // Y
         Eigen::MatrixXd sub_Y(Y.rows(), support.sum());
         int sub_Y_idx = 0;
         for (int i = 0; i < support.size(); ++i) {
@@ -80,7 +37,11 @@ void ksvd_update1(Eigen::MatrixXd Y, Eigen::MatrixXd &D, Eigen::MatrixXd &X) {
                 sub_Y.col(sub_Y_idx++) = Y.col(i);
             }
         }
+        
+        // d_j
+        Eigen::VectorXd atom_col = D.col(j); 
 
+        // X_T_i
         Eigen::RowVectorXd sub_X(support.sum());
         int sub_X_idx = 0;
         for (int i = 0; i < support.size(); ++i) {
@@ -89,16 +50,18 @@ void ksvd_update1(Eigen::MatrixXd Y, Eigen::MatrixXd &D, Eigen::MatrixXd &X) {
             }
         }
 
-        // 更新当前原子列向量
+        // E_k = Y - d_j * X_T_i
         Eigen::MatrixXd E_k = sub_Y - atom_col * sub_X;
-        // 对 A 进行 SVD 分解
+        
+        // apply SVD in A
         Eigen::JacobiSVD<Eigen::MatrixXd> svd(E_k, Eigen::ComputeThinU | Eigen::ComputeThinV);
-        // 获取分解后的矩阵和向量
         Eigen::MatrixXd U = svd.matrixU();
         Eigen::MatrixXd V = svd.matrixV();
         Eigen::VectorXd S = svd.singularValues();
 
+        // d_k = the first column of U
         D.col(j) = U.col(0);
+        // x_k_R = the first column of V * theta(1,1)
         Eigen::VectorXd X_i = S(0,0) * V.col(0);
         int X_i_idx = 0;
         for (int i = 0; i < support.size(); ++i) {
@@ -107,4 +70,32 @@ void ksvd_update1(Eigen::MatrixXd Y, Eigen::MatrixXd &D, Eigen::MatrixXd &X) {
             }
         }
     }
+}
+
+KsvdValues ksvd(Eigen::MatrixXd Y, int ATOM_NUM ,int ITER_NUM, int SPARSITY) {
+    
+    // step 1 : init dictionary
+    std::cout << "ksvd init..." << std::endl;
+    Eigen::MatrixXd D = ksvd_initation(Y.rows(), ATOM_NUM);
+    matrix_data(D, "dictionary_original", 256);
+
+    Eigen::MatrixXd X(ATOM_NUM, Y.cols());
+    // X.setZero();
+
+    // step 4 : guide if satisfy with stop rule
+    std::cout << "ksvd train..." << std::endl;
+    for (int i = 0; i < ITER_NUM; ++i) {
+        
+        std::cout << "train iter time: " << i << std::endl;
+        
+        // step 2 : sparse coding
+        std::cout << "omp start..." << std::endl;
+        _omp1(Y, D, X, SPARSITY);
+        
+        // step 3 ：update dictionary
+        std::cout << "kvd update..." << std::endl;
+        ksvd_update1(Y, D, X);
+    }
+
+    return {D, X};
 }

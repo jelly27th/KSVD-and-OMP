@@ -1,4 +1,6 @@
 #include <iostream>
+#include <time.h>
+
 #include <opencv2/opencv.hpp>
 #include <Eigen/Dense>
 
@@ -9,12 +11,12 @@
 #define PATCH_SIZE (8)
 #define ATOM_NUM (256)
 #define ITER_NUM (30)
+#define SPARSITY (50)
 
 int main(int argc, char **argv) {
 
     std::cout << "reading image..." << std::endl;
     cv::Mat image = read_image("../image/house.png");
-    
     // mat_data(image, "image");
     
     std::cout << "image to patches..." << std::endl;
@@ -25,36 +27,28 @@ int main(int argc, char **argv) {
 
     // ==============================================
     //  split line start
+    //  ksvd train start
     // ==============================================
-    std::cout << "ksvd init..." << std::endl;
-    Eigen::MatrixXd D = ksvd_iniitation(Y_norm, ATOM_NUM);
-    matrix_data(D, "dictionary_original", 256);
 
-    Eigen::MatrixXd X(D.cols(), Y.cols());
-    // X.setZero();
+    clock_t start, finish;
+    double totaltime;
+    start = clock();
 
-    std::cout << "ksvd train..." << std::endl;
-    for (int i = 0; i < ITER_NUM; ++i) {
-        
-        std::cout << "train iter time: " << i << std::endl;
-        
-        std::cout << "omp start..." << std::endl;
-        // _omp(Y, D, X);
-        _omp1(Y_norm, D, X);
-
-        std::cout << "kvd update..." << std::endl;
-        // ksvd_update(Y, D, X);
-        ksvd_update1(Y_norm, D, X);
-    }
+    KsvdValues ksvdvalues = ksvd(Y_norm, ATOM_NUM, ITER_NUM, SPARSITY);
 
     std::cout << "recover image..." << std::endl;
-    matrix_data(D, "dictionary_update", 256);
-    matrix_data(X, "sparse", 1024);
-    Eigen::MatrixXd patches_norm = multipy(D, X);
+    matrix_data(ksvdvalues.D, "dictionary_update", 256);
+    matrix_data(ksvdvalues.X, "sparse", 1024);
+    Eigen::MatrixXd patches_norm = multipy(ksvdvalues.D, ksvdvalues.X);
     matrix_data(patches_norm, "patches_recover", 1024);
+
+    finish = clock();
+    totaltime = (double)(finish - start) / CLOCKS_PER_SEC;
+    std::cout << "clock " << totaltime << "s" << std::endl;
 
     // ==================================================
     //     spilt line end
+    //     ksvd train end
     // ==================================================
     std::cout << "patches to image..." << std::endl;
     Eigen::MatrixXd patches = anti_matrix_norm(patches_norm, Y);

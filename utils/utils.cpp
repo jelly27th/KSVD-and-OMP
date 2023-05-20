@@ -116,5 +116,5 @@ Eigen::MatrixXd anti_matrix_norm(const Eigen::MatrixXd &D, const Eigen::MatrixXd
     // }
     // return D_anti;
 
-    return D * 10;
+    return D * 30;
 }
