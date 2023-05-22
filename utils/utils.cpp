@@ -100,21 +100,15 @@ void matrix_data(Eigen::MatrixXd data, std::string name, int size)
 */
 Eigen::MatrixXd matrix_norm(const Eigen::MatrixXd &D) {
     Eigen::MatrixXd D_norm = D;
-    for (int i = 0; i < D.cols(); i++) {
-        double norm = D_norm.col(i).norm();
-        D_norm.col(i) /= norm;
+    for (int i = 0; i < D_norm.cols(); i++) {
+        // double norm = D_norm.col(i).norm();
+        // D_norm.col(i) /= norm;
+        D_norm.col(i).normalize();
     }
     return D_norm;
 }
 
-Eigen::MatrixXd anti_matrix_norm(const Eigen::MatrixXd &D, const Eigen::MatrixXd &origin) {
-    // Eigen::MatrixXd D_anti = D;
-    // for (int i = 0; i < D.cols(); i++)
-    // {
-    //     double norm = origin.col(i).norm();
-    //     D_anti.col(i) = D.col(i) * norm;
-    // }
-    // return D_anti;
+Eigen::MatrixXd anti_matrix_norm(const Eigen::MatrixXd &D) {
 
     return D * 30;
 }

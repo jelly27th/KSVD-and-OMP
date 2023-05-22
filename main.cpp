@@ -10,8 +10,9 @@
 
 #define PATCH_SIZE (8)
 #define ATOM_NUM (256)
-#define ITER_NUM (30)
 #define SPARSITY (50)
+#define ITER_NUM (10)
+
 
 int main(int argc, char **argv) {
 
@@ -34,7 +35,8 @@ int main(int argc, char **argv) {
     double totaltime;
     start = clock();
 
-    KsvdValues ksvdvalues = ksvd(Y_norm, ATOM_NUM, ITER_NUM, SPARSITY);
+    // KsvdValues ksvdvalues = ksvd(Y_norm, ATOM_NUM, ITER_NUM, SPARSITY);
+    KsvdValues ksvdvalues = ksvd_test(Y_norm, ATOM_NUM, ITER_NUM, SPARSITY);
 
     std::cout << "recover image..." << std::endl;
     matrix_data(ksvdvalues.D, "dictionary_update", 256);
@@ -51,7 +53,7 @@ int main(int argc, char **argv) {
     //     ksvd train end
     // ==================================================
     std::cout << "patches to image..." << std::endl;
-    Eigen::MatrixXd patches = anti_matrix_norm(patches_norm, Y);
+    Eigen::MatrixXd patches = anti_matrix_norm(patches_norm);
     cv::Mat image2 = patches_to_image(patches, PATCH_SIZE);
     mat_data(image2, "recover");
     

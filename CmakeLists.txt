@@ -27,6 +27,8 @@ include_directories(ksvd)
 file(GLOB KSVD CONFIGURE_DEPENDS ksvd/*.cpp)
 include_directories(utils)
 file(GLOB UTILS CONFIGURE_DEPENDS utils/*.cpp)
+# include_directories(list)
+# file(GLOB LIST CONFIGURE_DEPENDS list/*.cpp)
 
 add_executable(KSVD main.cpp ${_OMP} ${KSVD} ${UTILS})
 
