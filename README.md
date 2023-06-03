@@ -1,15 +1,46 @@
-正交匹配追踪（Orthogonal Matching Pursuit，简称OMP）是一种用于稀疏信号重构的迭代算法。其基本思想是通过选择与当前残差具有最大内积的原子来逐步逼近原始信号的稀疏表示。下面是 OMP 算法的详细原理：
+# 结果
+| 原始图片 | 还原图片|
+| ------------- | ------------- |
+| ![image](../KSVD3/image/house.png) | ![image](../KSVD3/image/recover.png) |
+实际并没有完成图片还原，但好歹做都做了。
+# 运行环境
+- WSL
+- OpenCV 4.7.0
+- Eigen 3.4.0
 
-假设 $\mathbf{y}$ 是待重构的信号，$\mathbf{D}$ 是给定的字典矩阵， $\mathbf{x}$ 是 $\mathbf{y}$ 在 $\mathbf{D}$ 基下的系数向量，$k$ 是稀疏度，$\epsilon$ 是迭代停止的阈值。OMP 算法的流程如下：
+# OMP算法
 
-1. 初始化：令 $\mathbf{r}=\mathbf{y}$，$\mathcal{S}=\emptyset$，$\mathbf{x}=\mathbf{0}$。
+**输入** $M*N$的二维信号$Y$，$M*K$的字典矩阵$D$，稀疏度$k$.
+**输出** $K*N$的稀疏矩阵$X$.
 
-2. 选择原子：在 $\mathbf{D}$ 中寻找与 $\mathbf{r}$ 具有最大内积的原子，即 $\mathbf{d}_i=\arg\max_{\mathbf{d}_j\in\mathbf{D}}|\langle\mathbf{r}, \mathbf{d}_j\rangle|$，把它加入到集合 $\mathcal{S}$ 中。
+1. 初始化稀疏矩阵$X=0$，额外保存归一化的字典矩阵$D_{norm}$.
+2. 对二维信号的每一列信号$y_i$循环3~8步骤.
+3. 初始化残差$r=y_i$, 索引$I=\oslash$，迭代次数$t=1$.
+4. 找到残差与归一化的字典矩阵的列$dn_j$内积最大值$j = argmax_{1,2...k}(r^T \cdot dn_j)$.
+5. 更新索引$I=I\cup j$，重建原子集合$A_{new} = [D_{I \ne 0}]$.
+6. 最小二乘法求解稀疏信号$x_i = argmin||y_i -A_{new}x_i|| = (A_{new}^TA_{new})^{-1}A_{new}^Ty_i$
+7. $t = t + 1$
+8. 如果$t < k$，循环4~7步骤，否则跳出循环.
 
-3. 解线性方程：对集合 $\mathcal{S}$ 中的原子，求解线性方程 $\mathbf{x}_\mathcal{S}=\arg\min\|\mathbf{y}-\mathbf{D}_\mathcal{S}\mathbf{x}_\mathcal{S}\|_2$，其中 $\mathbf{D}_\mathcal{S}$ 是 $\mathbf{D}$ 中与 $\mathcal{S}$ 中的原子构成的子矩阵。
+# KSVD算法
 
-4. 更新残差：令 $\mathbf{r}=\mathbf{y}-\mathbf{D}_\mathcal{S}\mathbf{x}_\mathcal{S}$。
+**输入** $M*N$的二维信号$Y$，$M*K$的字典矩阵$D$，$K*N$的稀疏矩阵$X$，稀疏度$k$.
+**输出** $M*K$的字典矩阵$D$，$K*N$的稀疏矩阵$X$.
 
-5. 判断终止条件：如果满足 $\|\mathbf{r}\|_2<\epsilon$ 或者 $\|\mathbf{x}_\mathcal{S}\|_0=k$，则停止迭代，输出系数向量 $\mathbf{x}$；否则，返回步骤 2。
+1. 初始化字典矩阵$D$并使用$L_2$范数每列归一化.
+2. 对二维信号$Y$通过[OMP算法](#omp算法)求解稀疏系数$X=argmin(Y-DX)$.
+3. 对字典矩阵的每一列原子$d_j$，循环执行步骤4~6.
+4. 找到原子$d_j$对应行稀疏系数非零项索引$w_j = \left \{  i|1\le i \le N, x_j \ne 0 \right \} $.
+5. 按照稀疏系数非零项索引$w_j$构建新的稀疏系数$x_j'$和信号矩阵$y_j'$，并计算残差$E_k = y_j' - d_jx_j'$.
+6. 对残差进行奇异值SVD分解$E_k = U \Delta  V^T$，其中更新的原子$\tilde{d_j} = U(1,0)$，更新后的稀疏系数$\tilde{x_j'} = V(1,0)\Delta(1,1)$.
 
-其中，$\|\cdot\|_2$ 表示 $\ell_2$ 范数，即向量的欧几里得长度；$\|\cdot\|_0$ 表示 $\ell_0$ 范数，即向量中非零元素的个数。由于 $\ell_0$ 范数是 NP 难问题，因此通常采用 $\ell_1$ 范数来近似求解，即将步骤 3 中的 $\ell_2$ 范数最小化问题转化为 $\ell_1$ 范数最小化问题。
+# 参考
+## 库
+- [kSVD-Image-Denoising](https://github.com/trungmanhhuynh/kSVD-Image-Denoising)
+- [KSVD](https://github.com/DmytroBabenko/KSVD)
+
+## 文献
+- Aharon M, Elad M, Bruckstein A. K-SVD: An algorithm for designing overcomplete dictionaries for sparse representation[J]. IEEE Transactions on signal processing, 2006, 54(11): 4311-4322.
+- Usman K. Introduction to orthogonal matching pursuit[J]. Telkom University, 2017.
+- Rubinstein R, Zibulevsky M, Elad M. Efficient implementation of the K-SVD algorithm using batch orthogonal matching pursuit[R]. Computer Science Department, Technion, 2008.
+- 赵海峰, 鲁毓苗, 陆明, 等. 基于快速稀疏表示的医学图像压缩[J]. 计算机工程, 2014, 40(4): 233-236.

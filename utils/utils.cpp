@@ -16,13 +16,10 @@ Eigen::MatrixXd image_to_patches(cv::Mat image, int PATCH_SIZE) {
     int cols = image.cols;
     int n_channels = image.channels();
 
-    // 计算图像可以被分为多少个8*8的块
     int n_rows = rows / PATCH_SIZE;
     int n_cols = cols / PATCH_SIZE;
 
-    // 将图像转换为double类型的矩阵
     cv::Mat double_image;
-    // image.convertTo(double_image, CV_64F, 1.0 / 255);
     image.convertTo(double_image, CV_64F);
 
     Eigen::MatrixXd patches(n_channels * PATCH_SIZE * PATCH_SIZE, n_rows * n_cols);
@@ -58,8 +55,7 @@ cv::Mat patches_to_image(Eigen::MatrixXd patches, int PATCH_SIZE) {
     cv::Mat image(image_size, image_size, CV_64F);
 
     // Loop over patches and copy to output image
-    for (int i = 0; i < num_patches; i++)
-    { 
+    for (int i = 0; i < num_patches; i++) { 
         Eigen::VectorXd col = patches.col(i); 
         int cols = i % int(sqrt(num_patches));
         int rows = i / int(sqrt(num_patches));
@@ -78,16 +74,14 @@ cv::Mat patches_to_image(Eigen::MatrixXd patches, int PATCH_SIZE) {
     return image_uint8;
 }
 
-void mat_data(cv::Mat data, std::string name)
-{
+void mat_data(cv::Mat data, std::string name) {
     name = "../result/" + name;
     std::ofstream file(name);
     file << format(data, cv::Formatter::FMT_NUMPY) << std::endl;
     file.close();
 }
 
-void matrix_data(Eigen::MatrixXd data, std::string name, int size)
-{
+void matrix_data(Eigen::MatrixXd data, std::string name, int size) {
     name = "../result/" + name;
     std::ofstream file(name);
     Eigen::IOFormat fmt(size, 0, ", ", "\n", "[", "]");
