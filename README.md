@@ -2,6 +2,7 @@
 | 原始图片 | 还原图片|
 | ------------- | ------------- |
 | ![image](../KSVD3/image/house.png) | ![image](../KSVD3/image/recover.png) |
+
 实际并没有完成图片还原，但好歹做都做了。
 # 运行环境
 - WSL
